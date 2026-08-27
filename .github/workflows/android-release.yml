@@ -117,7 +117,7 @@ jobs:
         run: ./gradlew :app:assembleDebug --stacktrace --build-cache
 
       - name: Upload CI artifacts (APK + تقارير lint/tests)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: CI-artifacts
           path: |
@@ -275,7 +275,7 @@ jobs:
           ls -la dist
 
       - name: Upload mapping.txt (لفك تعميه R8 عند تحليل الأعطال)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-mapping
           path: app/build/outputs/mapping/release/mapping.txt
@@ -283,7 +283,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: APKs-and-Bundle
           path: dist/
