@@ -356,7 +356,7 @@ jobs:
       - name: Deploy Pages
         if: ${{ (github.event_name != 'workflow_dispatch' || inputs.deploy_pages) && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
       - name: Send to Telegram (رسالة + 3 ملفات)
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_telegram }}
