@@ -104,13 +104,13 @@ jobs:
           fi
 
       - name: Unit tests (بوابة إلزامية)
-        if: ${{ inputs.run_tests != false }}
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_tests }}
         run: |
           chmod +x gradlew
           ./gradlew :app:testDebugUnitTest --stacktrace --build-cache
 
       - name: Lint (تقرير تحذيري لا يكسر)
-        if: ${{ inputs.run_tests != false }}
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_tests }}
         run: ./gradlew :app:lintDebug --build-cache || true
 
       - name: Build Debug APK
@@ -209,7 +209,7 @@ jobs:
           fi
 
       - name: Unit tests (بوابة إلزامية قبل أي نشر)
-        if: ${{ inputs.run_tests != false }}
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_tests }}
         run: |
           chmod +x gradlew
           ./gradlew :app:testDebugUnitTest --stacktrace --build-cache
@@ -223,7 +223,7 @@ jobs:
           if [ -n "$LAST" ]; then
             BASE=$(echo "$LAST" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+).*/\1/'); RANGE="$LAST..HEAD"
           else
-            BASE="0.1.0"; RANGE="$(git rev-list --max-parents=0 HEAD | tail -1)..HEAD"
+            BASE="0.1.0"; RANGE="HEAD"
           fi
           MA=$(echo "$BASE" | cut -d. -f1); MI=$(echo "$BASE" | cut -d. -f2); PA=$(echo "$BASE" | cut -d. -f3)
           SUBJ=$(git log --pretty=%s "$RANGE" || true)
@@ -335,7 +335,7 @@ jobs:
             --notes-file release_notes.md --latest
 
       - name: Build Pages site (خصوصية + وصف قابل للنشر برابط ثابت)
-        if: ${{ inputs.deploy_pages != false && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.deploy_pages) && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
         run: |
           set -e
           mkdir -p _site
@@ -349,17 +349,17 @@ jobs:
           } > _site/index.html
 
       - name: Upload Pages artifact
-        if: ${{ inputs.deploy_pages != false && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.deploy_pages) && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
         uses: actions/upload-pages-artifact@v3
         with: { path: _site }
 
       - name: Deploy Pages
-        if: ${{ inputs.deploy_pages != false && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.deploy_pages) && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
         id: deployment
         uses: actions/deploy-pages@v4
 
       - name: Send to Telegram (رسالة + 3 ملفات)
-        if: ${{ inputs.send_telegram != false }}
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.send_telegram }}
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -402,7 +402,7 @@ jobs:
             echo "## ✅ ${APP_NAME} v${{ steps.collect.outputs.version || '?' }} (Build #${{ github.run_number }})"
             echo "| البند | الحالة |"
             echo "|---|---|"
-            echo "| الاختبارات | ${{ inputs.run_tests == false && 'متخطاة' || 'منفذة' }} |"
+            echo "| الاختبارات | ${{ (github.event_name != 'workflow_dispatch' || inputs.run_tests) && 'منفذة' || 'متخطاة' }} |"
             echo "| توقيع | ${{ steps.signing.outputs.signing || '?' }} |"
             echo "| Store-lint | ${{ steps.storelint.outputs.fail == '0' && 'سليم/تحذيرات' || 'تحذيرات' }} |"
             echo "| Pages | ${{ steps.deployment.outputs.page_url || 'غير منشور' }} |"
