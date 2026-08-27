@@ -76,6 +76,23 @@ base64 -w0 release.keystore   # انسخ الناتج
 
 ---
 
+## 5) Firebase App Distribution (توزيع فوري على مختبرين — بلا متجر)
+
+مستلهم من maddevsio/android-ci-cd. مثالي لتوزيع نسخ تجريبية قبل النشر العام:
+
+1. في [Firebase Console](https://console.firebase.google.com) أنشئ مشروعاً وأضف تطبيق أندرويد → انسخ **App ID** (بصيغة `1:1234:android:abcd`).
+2. من *Project settings → Service accounts* أنشئ مفتاح JSON.
+3. في تبويب *App Distribution* أنشئ مجموعة مختبرين باسم `testers` وأضف بريدهم.
+
+| السرّ | القيمة |
+|---|---|
+| `FIREBASE_APP_ID` | App ID من الخطوة 1 |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | محتوى ملف JSON كاملاً |
+
+عند اكتمالهما يُوزَّع release APK تلقائياً على المجموعة مع ملاحظات الإصدار في كل دفعة.
+
+---
+
 ## قواعد أمان
 
 - لا تودِع أبداً keystore أو JSON مفاتيح في المستودع.

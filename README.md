@@ -1,5 +1,9 @@
 # 🤖 android-ci-template — مستودع أتمتة إنتاجي كامل لتطبيقات أندرويد
 
+[![Android · CI · Release](https://github.com/engmohammeda/android-ci-template/actions/workflows/android-release.yml/badge.svg)](https://github.com/engmohammeda/android-ci-template/actions/workflows/android-release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/engmohammeda/android-ci-template?label=%D8%A3%D8%AD%D8%AF%D8%AB%20%D8%A5%D8%B5%D8%AF%D8%A7%D8%B1)](https://github.com/engmohammeda/android-ci-template/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 قالب جاهز يمنح أي تطبيق أندرويد **خط إنتاج كاملاً** من أول دفعة: بناء، اختبار، توقيع، ترقيم دلالي، إصدارات GitHub، إرسال تلجرام، صفحة خصوصية على Pages، ورفع اختياري إلى Google Play.
 
 ## 🗺️ خريطة التشغيل
@@ -48,6 +52,7 @@
 | `KEYSTORE_BASE64` + `KEYSTORE_PASSWORD` + `KEY_ALIAS` + `KEY_PASSWORD` | توقيع إنتاجي (وإلا توقيع debug تلقائي) |
 | `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` | إرسال الملاحظات وملفات APK/AAB إلى تلجرام |
 | `GOOGLE_SERVICES_JSON` | يتفعّل فقط إذا تبنّى تطبيقك Firebase |
+| `FIREBASE_APP_ID` + `FIREBASE_SERVICE_ACCOUNT_JSON` | توزيع فوري على مجموعة مختبرين عبر Firebase App Distribution |
 | `PLAY_SERVICE_ACCOUNT_JSON` | الرفع إلى Google Play (مسار internal) |
 
 التفاصيل خطوة بخطوة في [docs/SECRETS.md](docs/SECRETS.md).
@@ -58,6 +63,7 @@
 - [docs/SECRETS.md](docs/SECRETS.md) — إعداد كل سرّ بالتفصيل
 - [docs/RELEASE_FLOW.md](docs/RELEASE_FLOW.md) — تشريح خط الإصدار خطوة بخطوة
 - [docs/STORE_CHECKLIST.md](docs/STORE_CHECKLIST.md) — قائمة جاهزية متجر Play
+- [docs/INSPIRATION.md](docs/INSPIRATION.md) — مقارنة معيارية مع أفضل المشاريع المفتوحة وتحليل فجوات
 - [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md) — خارطة التحسينات والتطويرات المقترحة
 
 ## 🧪 التطبيق النموذجي

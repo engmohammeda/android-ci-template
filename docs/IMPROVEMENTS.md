@@ -16,10 +16,15 @@
 
 ## 🎯 أولوية عالية (الخطوة التالية المنطقية)
 
+> بنود إضافية نُفّذت في جولة الاستلهام (راجع INSPIRATION.md): إنذار تلجرام عند الفشل،
+> فرق حجم APK عن الإصدار السابق، صفحة هبوط حية على Pages، Firebase App Distribution اختياري، شارات README.
+
+- **اختبارات لقطات Roborazzi على JVM** (من nowinandroid): اختبار الواجهات بصرياً دون محاكي — أسرع بكثير من Instrumented tests.
+- **Dependency Guard** (من nowinandroid): خط أساس للاعتمادات يمنع تسلل تبعية جديدة خفية عبر PR.
 - **تفعيل الرفع الفعلي إلى Play**: استبدال خطوة الـ echo بـ `r0adkll/upload-google-play@v1` بعد رفع أول AAB يدوياً وضبط حساب الخدمة.
-- **اختبارات Instrumented على محاكي**: وظيفة منفصلة بـ `reactivecircus/android-emulator-runner` تشغّل `connectedDebugAndroidTest` في الـ PR.
+- **اختبارات Instrumented على محاكي**: وظيفة منفصلة بـ `reactivecircus/android-emulator-runner` تشغّل `connectedDebugAndroidTest` في الـ PR (مع تفعيل KVM).
 - **حماية الفرع `main`**: قاعدة تشترط نجاح وظيفة CI قبل الدمج + مراجعة إلزامية.
-- **Environments بمراجعين**: بيئة `production` بـ Required reviewers قبل خطوة Play — نشر بموافقة بشرية.
+- **Environments بمراجعين** (من maddevsio): بيئة `production` بـ Required reviewers قبل خطوة Play — نشر بموافقة بشرية.
 
 ## 🔶 أولوية متوسطة
 

@@ -257,6 +257,8 @@ jobs:
 
       - name: Collect dist + SHA256 + sizes
         id: collect
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           VERSION="${{ steps.notes.outputs.version }}"; mkdir -p dist
@@ -271,6 +273,20 @@ jobs:
             (cd dist && sha256sum * && du -h *)
             echo '```'
           } >> /tmp/notes_body.md
+          # ── فرق الحجم مقابل الإصدار السابق (مستلهم من Diffuse/diff-apk) ──
+          PREV_SIZE=$(gh release view --repo "${{ github.repository }}" \
+            --json assets -q '.assets[] | select(.name | endswith("release.apk")) | .size' 2>/dev/null | head -1 || true)
+          NEW_APK=$(ls dist/*release.apk 2>/dev/null | head -1 || true)
+          if [ -n "$PREV_SIZE" ] && [ -n "$NEW_APK" ]; then
+            NEW_SIZE=$(stat -c%s "$NEW_APK")
+            DELTA=$((NEW_SIZE - PREV_SIZE))
+            SIGN="±"; [ "$DELTA" -gt 0 ] && SIGN="🔺+"; [ "$DELTA" -lt 0 ] && SIGN="🔻"
+            {
+              echo ""
+              echo "## 📏 فرق الحجم عن الإصدار السابق"
+              echo "- release.apk: $(numfmt --to=iec $PREV_SIZE) → $(numfmt --to=iec $NEW_SIZE) (${SIGN}$(numfmt --to=iec ${DELTA#-}))"
+            } >> /tmp/notes_body.md
+          fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           ls -la dist
 
@@ -334,19 +350,25 @@ jobs:
             --title "${APP_NAME} v${VERSION} (Build #${RUN})" \
             --notes-file release_notes.md --latest
 
-      - name: Build Pages site (خصوصية + وصف قابل للنشر برابط ثابت)
+      - name: Build Pages site (صفحة هبوط + خصوصية برابط ثابت)
         if: ${{ (github.event_name != 'workflow_dispatch' || inputs.deploy_pages) && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
         run: |
           set -e
           mkdir -p _site
+          # صفحة الهبوط (روابط تحميل حية من Releases API — مستلهمة من نمط Obtainium)
+          if [ -d site ]; then cp -r site/* _site/; fi
+          # صفحة الخصوصية المستقلة (رابط ثابت لمتجر Play)
           { echo "<!doctype html><html lang=ar dir=rtl><meta charset=utf-8><title>${APP_NAME} — الخصوصية</title>"
-            echo "<body style='font-family:system-ui;max-width:720px;margin:40px auto;line-height:1.8'>"
+            echo "<body style='font-family:system-ui;max-width:720px;margin:40px auto;line-height:1.8;padding:0 16px'>"
             echo "<h1>سياسة الخصوصية — ${APP_NAME}</h1>"
             sed 's/$/<br>/' store/privacy_policy.md 2>/dev/null || echo "<p>أضف store/privacy_policy.md</p>"
             echo "<h2>وصف التطبيق</h2>"
             sed 's/$/<br>/' store/full_description.md 2>/dev/null || true
+            echo "<p><a href='index.html'>⬅ عودة لصفحة التحميل</a></p>"
             echo "</body></html>"
-          } > _site/index.html
+          } > _site/privacy.html
+          # توافق خلفي: من لا يملك site/ يحصل على الخصوصية كصفحة رئيسية
+          [ -f _site/index.html ] || cp _site/privacy.html _site/index.html
 
       - name: Upload Pages artifact
         if: ${{ (github.event_name != 'workflow_dispatch' || inputs.deploy_pages) && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
@@ -382,6 +404,29 @@ jobs:
             echo
           done
 
+      - name: Firebase App Distribution — فحص التفعيل (مستلهم من maddevsio/android-ci-cd)
+        id: fbcheck
+        env:
+          FB_APP: ${{ secrets.FIREBASE_APP_ID }}
+          FB_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -n "$FB_APP" ] && [ -n "$FB_SA" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Firebase App Distribution غير مفعّل (أضف FIREBASE_APP_ID + FIREBASE_SERVICE_ACCOUNT_JSON)"
+          fi
+
+      - name: Firebase App Distribution — توزيع على المختبرين (اختياري)
+        if: ${{ steps.fbcheck.outputs.ok == 'true' }}
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          groups: testers
+          file: app/build/outputs/apk/release/app-release.apk
+          releaseNotesFile: /tmp/notes_body.md
+
       - name: Publish to Google Play (internal track) — اختياري
         if: ${{ inputs.publish_play == true }}
         env:
@@ -394,6 +439,24 @@ jobs:
           echo "  supply --aab dist/*.aab --track internal --json_key /tmp/play.json"
           # التنفيذ الفعلي (فعّل بعد التأكد من إعداد حساب الخدمة في Play Console):
           # راجع docs/SECRETS.md لخطوات التفعيل الكاملة
+
+      - name: Telegram — إنذار فوري عند الفشل (مستلهم من maddevsio)
+        if: ${{ failure() }}
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ] || exit 0
+          FIRST_LINE=$(printf '%s' "$COMMIT_MSG" | head -1)
+          {
+            echo "🔴 فشل خط الإصدار — ${APP_NAME} (Build #${{ github.run_number }})"
+            echo "الفرع: ${{ github.ref_name }}"
+            echo "الـ commit: $FIRST_LINE"
+            echo "التفاصيل: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } > /tmp/fail.txt
+          curl -sS -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+            -d "chat_id=$TG_CHAT" --data-urlencode "text@/tmp/fail.txt" || true
 
       - name: Job Summary (جدول الحالة)
         if: always()
