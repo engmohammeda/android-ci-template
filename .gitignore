@@ -1,0 +1,32 @@
+# Gradle
+.gradle/
+build/
+app/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android
+local.properties
+*.apk
+*.aab
+captures/
+.externalNativeBuild/
+.cxx/
+
+# التوقيع — لا تودِع مفاتيح حقيقية أبداً
+*.keystore
+*.jks
+!debug.keystore
+
+# Firebase — يُحقن من السرّ في CI
+app/google-services.json
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# مخرجات الأتمتة المحلية
+dist/
+_site/
+release_notes.md
